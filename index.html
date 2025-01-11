@@ -5,8 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enter Student Information</title>
     <link rel="stylesheet" href="style.css">
-</head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
 
+        .container {
+            width: 80%;
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Note Box Styling */
+        .note-box {
+            background-color: #f8d7da;
+            border-left: 6px solid #f5c6cb;
+            padding: 15px;
+            margin-top: 20px;
+            color: #721c24;
+            font-size: 1.1rem;
+            border-radius: 5px;
+        }
+
+        .note-box ul {
+            padding-left: 20px; /* Indentation for list */
+            list-style-type: disc; /* Bullet points */
+            font-size: 1rem;
+        }
+
+        .note-box ul li {
+            margin-bottom: 10px; /* Space between points */
+        }
+
+        .note-box h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
 <body>
     <div class="container">
         <h1>TREASURE HUNT</h1>
@@ -16,8 +98,20 @@
             
             <label for="phone">Phone Number:</label>
             <input type="text" id="phone" required>
+            
             <button type="submit">Submit</button>
         </form>
+
+        <!-- Note Box Below Submit Button -->
+        <div class="note-box">
+            <h3>Important Information:</h3>
+            <ul>
+                <li>The quiz consists of 10 questions, and each team will get different questions.</li>
+                <li>You have to complete the quiz in 1 minute (60 seconds), or it will be submitted automatically.</li>
+                <li>Winners will be declared based on marks obtained and the time taken to complete the quiz.</li>
+                <strong>Best of luck!</strong>
+            </ul>
+        </div>
     </div>
 
     <!-- Firebase SDK via CDN -->
