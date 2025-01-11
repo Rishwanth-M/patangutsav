@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Student Information</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>TREASURE HUNT</h1>
+        <form id="student-form">
+            <label for="name">Team Name:</label>
+            <input type="text" id="name" required>
+            
+            <label for="phone">Phone Number:</label>
+            <input type="text" id="phone" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <!-- Firebase SDK via CDN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtNXG46tyO2FDZ0yO5p8CiNpp2uB3IbvE",
+            authDomain: "quiz-47dd2.firebaseapp.com",
+            projectId: "quiz-47dd2",
+            storageBucket: "quiz-47dd2.appspot.com",
+            messagingSenderId: "172238588465",
+            appId: "1:172238588465:web:2aeddba718aef68b952310",
+            measurementId: "G-TXMB92DQNC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById("student-form").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const phone = document.getElementById("phone").value;
+
+            // Reference to Firestore
+            const studentRef = doc(db, "students", name);
+
+            try {
+                // Set the student data in Firestore
+                await setDoc(studentRef, {
+                    name: name,
+                    phone: phone
+                });
+
+                // Redirect to quiz page after successful submission with team name as a query parameter
+                window.location.href = "quiz.html?user=" + encodeURIComponent(name);
+            } catch (error) {
+                console.error("Error adding document: ", error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Results</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3e50;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 20px;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Final Results</h1>
+    <div id="loading" class="loading">Loading results...</div>
+    <table id="results-table" style="display: none;">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone Number</th>
+                <th>Marks Scored</th>
+                <th>Time Taken</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Results will be dynamically added here -->
+        </tbody>
+    </table>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";  
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtNXG46tyO2FDZ0yO5p8CiNpp2uB3IbvE",
+            authDomain: "quiz-47dd2.firebaseapp.com",
+            projectId: "quiz-47dd2",
+            storageBucket: "quiz-47dd2.appspot.com",
+            messagingSenderId: "172238588465",
+            appId: "1:172238588465:web:2aeddba718aef68b952310",
+            measurementId: "G-TXMB92DQNC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to fetch and display the results
+        async function fetchResults() {
+            try {
+                const resultsRef = collection(db, "user_responses");
+                const querySnapshot = await getDocs(query(resultsRef, where("submitted", "==", true)));
+                const resultsTable = document.getElementById("results-table");
+                const loadingText = document.getElementById("loading");
+                const tbody = resultsTable.querySelector("tbody");
+
+                // Hide loading text and show the table once results are fetched
+                loadingText.style.display = "none";
+                resultsTable.style.display = "table";
+
+                // Loop through each document and fetch data
+                querySnapshot.forEach(async (doc) => {
+                    const data = doc.data();
+                    const userName = data.userName;
+                    const score = data.score;
+                    const timeTaken = data.timeTaken;
+
+                    // Fetch the phone number and name from the "students" collection
+                    const studentRef = collection(db, "students");
+                    const studentSnapshot = await getDocs(query(studentRef, where("name", "==", userName)));
+
+                    studentSnapshot.forEach((studentDoc) => {
+                        const studentData = studentDoc.data();
+                        const phoneNumber = studentData.phone;
+                        const studentName = studentData.name;
+
+                        // Create a new row and append it to the table
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${studentName}</td>
+                            <td>${phoneNumber}</td>
+                            <td>${score}</td>
+                            <td>${timeTaken} seconds</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                });
+            } catch (error) {
+                console.error("Error fetching results: ", error);
+            }
+        }
+
+        // Call the fetchResults function when the page loads
+        fetchResults();
+    </script>
+</body>
+</html>
+

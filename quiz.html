@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styling */
+body {
+    background-color: #ff0000;
+    color: #00ff00;
+    font-family: 'Comic Sans MS', sans-serif;
+    text-align: center; /* Center-align content */
+    font-size: 18px;
+    padding: 50px;
+    border: 5px solid yellow;
+}
+
+/* Header styling */
+h1 {
+    font-size: 50px;
+    color: purple;
+    text-decoration: underline;
+    font-family: 'Times New Roman', sans-serif;
+    letter-spacing: 5px;
+    margin-bottom: 30px;
+}
+
+/* Quiz container styling */
+.quiz-container {
+    background-color: #ffff00;
+    border: 10px dotted red;
+    padding: 50px;
+    margin-top: 40px;
+    max-width: 100%; /* Ensure it doesn't overflow */
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+/* Flexbox layout for question blocks */
+/* Center question text */
+.question-container {
+    background-color: #ffffff;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 3px solid #0000ff;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 2px dotted #000000; /* Dotted bottom border */
+}
+
+/* Center question text */
+.question-container p {
+    margin: 20px;
+    font-size: 20px;
+    font-family: 'Courier New', sans-serif;
+    text-align: center;
+    color: #000000; /* Dark black color for question text */
+    font-weight: bold; /* Make the text bold */
+}
+
+/* Question header style */
+.question-container .question-header {
+    font-size: 22px;
+    color: #ff4500;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* Align options to the left */
+.question-container label {
+    display: block;
+    margin: 10px 0;
+    font-size: 16px;
+    color: black; /* Black color for option text */
+    cursor: pointer;
+    text-align: left; /* Ensure options are left-aligned */
+    width: 100%; /* Ensures the label takes up full width */
+}
+
+/* Submit button styling */
+#submit-btn {
+    padding: 12px 25px;
+    background-color: #007bff;
+    color: white;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+}
+
+#submit-btn:hover {
+    background-color: #0056b3;
+}
+
+#timer {
+    font-size: 20px;
+    margin-top: 20px;
+    color: #ff4500;
+}
+
+/* Media Query for smaller screens */
+@media (max-width: 768px) {
+    body {
+        padding: 20px;
+        font-size: 16px;
+    }
+
+    .quiz-container {
+        width: 100%;
+        padding: 30px;
+    }
+
+    h1 {
+        font-size: 40px;
+    }
+
+    .question-container p {
+        font-size: 18px;
+        margin: 15px;
+    }
+
+    #submit-btn {
+        font-size: 1.2rem;
+        padding: 10px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 30px;
+    }
+
+    .quiz-container {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .question-container p {
+        font-size: 16px;
+        margin: 10px;
+    }
+
+    #submit-btn {
+        font-size: 18px;
+        padding: 10px 20px;
+        width: 150px;
+    }
+}
+
+        #timer {
+            font-size: 20px;
+            margin-top: 20px;
+            color: #ff4500;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div id="timer">Time Left: 60s</div>
+        <h1>Quiz</h1>
+        <form id="quiz-form">
+            <!-- Questions will be dynamically added here -->
+        </form>
+        <button id="submit-btn">Submit</button>
+        <div id="time-taken"></div> <!-- To display time taken to complete the quiz -->
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, limit, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";  
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtNXG46tyO2FDZ0yO5p8CiNpp2uB3IbvE",
+            authDomain: "quiz-47dd2.firebaseapp.com",
+            projectId: "quiz-47dd2",
+            storageBucket: "quiz-47dd2.appspot.com",
+            messagingSenderId: "172238588465",
+            appId: "1:172238588465:web:2aeddba718aef68b952310",
+            measurementId: "G-TXMB92DQNC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Retrieve user data (team name) from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = decodeURIComponent(urlParams.get("user"));
+
+        // Check if the user has already submitted the quiz
+        async function checkIfSubmitted() {
+            const userQuizRef = doc(db, "user_responses", userName);
+            const docSnapshot = await getDoc(userQuizRef);
+
+            if (docSnapshot.exists() && docSnapshot.data().submitted) {
+                // If the user has already submitted, redirect to the result page
+                window.location.href = "result.html?user=" + encodeURIComponent(userName);
+            }
+        }
+
+        checkIfSubmitted();
+
+        const timerElement = document.getElementById("timer");
+        const submitButton = document.getElementById("submit-btn");
+        const timeTakenElement = document.getElementById("time-taken");
+
+        let timeLeft = 60;
+        let startTime = Date.now();  // Store the start time when the page loads
+        let submitted = false; // Track whether the user has submitted the quiz
+
+        // Timer logic
+        const timerInterval = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = `Time Left: ${timeLeft}s`;
+
+            if (timeLeft <= 0 && !submitted) {
+                clearInterval(timerInterval);
+                autoSubmitQuiz(); // Automatically submit the quiz when time runs out
+            }
+        }, 1000);
+
+        // Fetch all questions from Firestore
+async function fetchQuizQuestions() {
+    const questionsRef = collection(db, "quiz_questions");
+    const querySnapshot = await getDocs(questionsRef); // Fetch all questions
+    const allQuestions = [];
+
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        allQuestions.push({ id: doc.id, ...data });
+    });
+
+    // Randomly select 10 questions
+    const randomQuestions = getRandomQuestions(allQuestions, 10);
+    renderQuestions(randomQuestions);
+}
+
+// Helper function to randomly select 10 questions from an array of questions
+function getRandomQuestions(allQuestions, numQuestions) {
+    const shuffled = allQuestions.sort(() => 0.5 - Math.random()); // Shuffle the questions array
+    return shuffled.slice(0, numQuestions); // Select the first 'numQuestions' questions
+}
+
+// Render questions dynamically
+function renderQuestions(questions) {
+    const questionsContainer = document.getElementById("quiz-form");
+
+    questions.forEach((question, index) => {
+        const questionElement = document.createElement("div");
+        questionElement.classList.add("question-container");
+
+        questionElement.innerHTML = `
+            <p><strong>Q${index + 1}:</strong> ${question.question}</p>
+            <label><input type="radio" name="question${index}" value="A"> A: ${question.options.A}</label>
+            <label><input type="radio" name="question${index}" value="B"> B: ${question.options.B}</label>
+            <label><input type="radio" name="question${index}" value="C"> C: ${question.options.C}</label>
+            <label><input type="radio" name="question${index}" value="D"> D: ${question.options.D}</label>
+        `;
+
+        questionsContainer.appendChild(questionElement);
+    });
+}
+
+
+        // Handle form submission when the user clicks "Submit"
+        submitButton.addEventListener("click", function() {
+            if (!submitted) {
+                submitted = true; // Mark the quiz as submitted
+                clearInterval(timerInterval); // Stop the timer if submitted manually
+
+                const endTime = Date.now(); // Capture the end time when the quiz is submitted manually
+                const timeTaken = ((endTime - startTime) / 1000).toFixed(2); // Calculate the time taken in seconds
+
+                timeTakenElement.textContent = `Completed in ${timeTaken} seconds`; // Display the time taken
+
+                storeQuizResults(timeTaken);
+            }
+        });
+
+        // Function to handle automatic submission
+        function autoSubmitQuiz() {
+            const timeTaken = 60; // If the quiz is automatically submitted, the time will be 60 seconds
+            timeTakenElement.textContent = `Completed in ${timeTaken} seconds`; // Display the time as 60 seconds
+            storeQuizResults(timeTaken);
+        }
+
+        async function storeQuizResults(timeTaken) {
+    const formData = new FormData(document.getElementById("quiz-form"));
+    const responses = {};
+    let score = 0; // Variable to track the score
+
+    // Fetch the correct answers from Firestore (or hardcode them)
+    const questionsRef = collection(db, "quiz_questions");
+    const querySnapshot = await getDocs(query(questionsRef, limit(10))); // Adjust query for randomization if needed
+    const correctAnswers = {};
+
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        correctAnswers[doc.id] = data.correctAnswer; // Assuming correctAnswer is stored in the question document
+    });
+
+    // Compare user answers with correct answers
+    formData.forEach((value, key) => {
+        const questionId = key.replace('question', ''); // Extract question ID from the name attribute
+        responses[questionId] = value;
+
+        // Check if the user's answer is correct
+        if (value === correctAnswers[questionId]) {
+            score++; // Increment score if the answer is correct
+        }
+    });
+
+    // Store the responses and score in Firestore
+    try {
+        const submissionTime = new Date().toISOString();
+        const userQuizRef = doc(db, "user_responses", userName);
+        
+        // Mark the user as submitted and store their score
+        await setDoc(userQuizRef, {
+            responses: responses,
+            userName: userName,
+            submissionTime: submissionTime,
+            timeTaken: timeTaken,
+            score: score, // Store the score (out of 10)
+            submitted: true // Mark the user as having submitted the quiz
+        });
+
+        // Redirect to result page after successful submission
+        window.location.href = "result.html?user=" + encodeURIComponent(userName);
+    } catch (error) {
+        console.error("Error storing responses: ", error);
+    }
+}
+
+
+        // Automatically submit quiz if the page is refreshed or closed
+        window.addEventListener("beforeunload", function() {
+            if (!submitted) {
+                autoSubmitQuiz(); // Trigger auto submission on page refresh/close
+            }
+        });
+
+        // Load questions when the page loads
+        fetchQuizQuestions();
+    </script>
+</body>
+</html>

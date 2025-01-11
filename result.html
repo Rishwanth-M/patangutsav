@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+    <style>
+        /* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styling */
+body {
+    background-color: #ff0000;
+    color: #00ff00;
+    font-family: 'Comic Sans MS', sans-serif;
+    text-align: center; /* Center-align content */
+    font-size: 18px;
+    padding: 50px;
+    border: 5px solid yellow;
+}
+
+h1 {
+    font-size: 50px;
+    color: purple;
+    text-decoration: underline;
+    font-family: 'Times New Roman', sans-serif;
+    letter-spacing: 5px;
+    margin-bottom: 30px;
+}
+
+/* Result container styling */
+#result-container {
+    background-color: #ffff00;
+    border: 10px dotted red;
+    padding: 50px;
+    margin-top: 40px;
+    max-width: 100%; /* Ensure it doesn't overflow */
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+/* Flexbox layout for result question blocks */
+.result-question {
+    background-color: #ffffff;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 3px solid #0000ff;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Center question text */
+.result-question p {
+    margin: 20px;
+    font-size: 20px;
+    font-family: 'Courier New', sans-serif;
+    text-align: center;
+}
+
+/* Question header style */
+.result-question .question-header {
+    font-size: 22px;
+    color: #000000;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* Correct answer styling */
+.correct-answer {
+    color: #0000ff;
+    background-color: #00ffff;
+    padding: 5px;
+    border-radius: 100px;
+}
+
+/* Incorrect answer styling */
+.incorrect-answer {
+    color: #ffff00;
+    background-color: #ff1493;
+    padding: 5px;
+    border-radius: 0;
+}
+
+/* Total score section styling */
+#score-section {
+    background-color: #00ff00;
+    padding: 30px;
+    margin-top: 60px;
+    border: 10px solid #ff6347;
+    font-size: 30px;
+    color: black;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+/* Retake button styling */
+#retake-btn {
+    display: block;
+    background-color: #ff6347;
+    padding: 20px;
+    font-size: 30px;
+    color: #000000;
+    text-decoration: none;
+    margin-top: 50px;
+    border: 5px dashed #0000ff;
+    box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.5);
+    width: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+#retake-btn:hover {
+    background-color: #0000ff;
+    color: #ff6347;
+    text-decoration: underline;
+}
+
+/* Media Query for smaller screens */
+@media (max-width: 768px) {
+    body {
+        padding: 20px;
+        font-size: 16px;
+    }
+
+    #result-container {
+        width: 100%;
+        padding: 30px;
+    }
+
+    .result-question p {
+        font-size: 18px;
+        margin: 15px;
+    }
+
+    #score-section {
+        font-size: 24px;
+        padding: 20px;
+    }
+
+    #retake-btn {
+        font-size: 20px;
+        padding: 15px;
+        width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 40px;
+    }
+
+    #result-container {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .result-question p {
+        font-size: 16px;
+        margin: 10px;
+    }
+
+    #score-section {
+        font-size: 20px;
+        padding: 15px;
+    }
+
+    #retake-btn {
+        font-size: 18px;
+        padding: 10px;
+        width: 120px;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <h1>Quiz Result</h1>
+    <div id="result-container">
+        <!-- Results will be dynamically added here -->
+    </div>
+    <p id="score-section">
+        <strong>Total Score: </strong><span id="score"></span>
+    </p>
+    
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtNXG46tyO2FDZ0yO5p8CiNpp2uB3IbvE",
+            authDomain: "quiz-47dd2.firebaseapp.com",
+            projectId: "quiz-47dd2",
+            storageBucket: "quiz-47dd2.appspot.com",
+            messagingSenderId: "172238588465",
+            appId: "1:172238588465:web:2aeddba718aef68b952310",
+            measurementId: "G-TXMB92DQNC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = decodeURIComponent(urlParams.get("user"));
+
+        async function fetchResult() {
+            const userRef = doc(db, "user_responses", userName);
+            const docSnap = await getDoc(userRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const responses = data.responses;
+                const totalScore = data.totalScore;
+                const resultContainer = document.getElementById("result-container");
+
+                let score = 0;
+
+                // Iterate through responses using Object.entries()
+                Object.entries(responses).forEach(([questionId, selectedAnswer], index) => {
+                    const questionElement = document.createElement("div");
+                    questionElement.classList.add("result-question");
+
+                    const correctAnswer = getCorrectAnswer(questionId); // Retrieve the correct answer from Firestore data
+
+                    if (selectedAnswer === correctAnswer) {
+                        score++;
+                    }
+
+                    questionElement.innerHTML = `
+                        <p class="question-header"><strong>Q${index + 1}:</strong> Question ${questionId}</p>
+                        <p>Your Answer: <span class="answer ${selectedAnswer === correctAnswer ? 'correct-answer' : 'incorrect-answer'}">${selectedAnswer}</span></p>
+                        <p>Correct Answer: <span class="answer correct-answer">${correctAnswer}</span></p>
+                    `;
+
+                    resultContainer.appendChild(questionElement);
+                });
+
+                document.getElementById("score").innerText = `${score} out of 10`;
+            }
+        }
+
+        // Function to get the correct answer (fetch this from Firestore or predefined data)
+        function getCorrectAnswer(questionId) {
+            // Fetch the correct answer for the given question (example dummy value)
+            return "A"; // Replace with actual logic to fetch correct answer
+        }
+
+        fetchResult();
+    </script>
+</body>
+</html>
