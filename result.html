@@ -202,8 +202,8 @@ h1 {
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+    
         const firebaseConfig = {
             apiKey: "AIzaSyAtNXG46tyO2FDZ0yO5p8CiNpp2uB3IbvE",
             authDomain: "quiz-47dd2.firebaseapp.com",
@@ -213,56 +213,91 @@ h1 {
             appId: "1:172238588465:web:2aeddba718aef68b952310",
             measurementId: "G-TXMB92DQNC"
         };
-
+    
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
+    
         const urlParams = new URLSearchParams(window.location.search);
         const userName = decodeURIComponent(urlParams.get("user"));
-
-        async function fetchResult() {
+    
+        async function fetchResultAndStore() {
             const userRef = doc(db, "user_responses", userName);
             const docSnap = await getDoc(userRef);
-
+    
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 const responses = data.responses;
-                const totalScore = data.totalScore;
                 const resultContainer = document.getElementById("result-container");
-
+    
                 let score = 0;
-
-                // Iterate through responses using Object.entries()
+                const detailedResults = [];
+    
                 Object.entries(responses).forEach(([questionId, selectedAnswer], index) => {
-                    const questionElement = document.createElement("div");
-                    questionElement.classList.add("result-question");
-
-                    const correctAnswer = getCorrectAnswer(questionId); // Retrieve the correct answer from Firestore data
-
-                    if (selectedAnswer === correctAnswer) {
+                    const correctAnswer = getCorrectAnswer(questionId); // Retrieve the correct answer
+                    const isCorrect = selectedAnswer === correctAnswer;
+    
+                    // Increment score if the answer is correct
+                    if (isCorrect) {
                         score++;
                     }
-
+    
+                    // Append result details
+                    detailedResults.push({
+                        questionId: questionId,
+                        userAnswer: selectedAnswer,
+                        correctAnswer: correctAnswer,
+                        isCorrect: isCorrect
+                    });
+    
+                    // Update result UI
+                    const questionElement = document.createElement("div");
+                    questionElement.classList.add("result-question");
                     questionElement.innerHTML = `
                         <p class="question-header"><strong>Q${index + 1}:</strong> Question ${questionId}</p>
-                        <p>Your Answer: <span class="answer ${selectedAnswer === correctAnswer ? 'correct-answer' : 'incorrect-answer'}">${selectedAnswer}</span></p>
+                        <p>Your Answer: <span class="answer ${isCorrect ? 'correct-answer' : 'incorrect-answer'}">${selectedAnswer}</span></p>
                         <p>Correct Answer: <span class="answer correct-answer">${correctAnswer}</span></p>
                     `;
-
                     resultContainer.appendChild(questionElement);
                 });
-
+    
                 document.getElementById("score").innerText = `${score} out of 10`;
+    
+                // Store the detailed result into Firestore
+                await storeResultToFirestore(detailedResults, score);
+            } else {
+                console.error("No data found for user:", userName);
             }
         }
-
-        // Function to get the correct answer (fetch this from Firestore or predefined data)
-        function getCorrectAnswer(questionId) {
-            // Fetch the correct answer for the given question (example dummy value)
-            return "A"; // Replace with actual logic to fetch correct answer
+    
+        // Function to store result in Firestore
+        async function storeResultToFirestore(detailedResults, score) {
+            try {
+                const resultRef = doc(db, "quiz_results", userName);
+                const submissionTime = new Date().toISOString();
+    
+                await setDoc(resultRef, {
+                    userName: userName,
+                    submissionTime: submissionTime,
+                    score: score,
+                    totalQuestions: detailedResults.length,
+                    results: detailedResults
+                });
+    
+                console.log("Results stored successfully in Firestore!");
+            } catch (error) {
+                console.error("Error storing results:", error);
+            }
         }
-
-        fetchResult();
+    
+        // Function to get the correct answer (replace with actual Firestore query or logic)
+        function getCorrectAnswer(questionId) {
+            // Dummy correct answer logic
+            return "A"; // Replace with actual correct answer logic or Firestore query
+        }
+    
+        // Fetch result and store
+        fetchResultAndStore();
     </script>
+    
 </body>
 </html>
