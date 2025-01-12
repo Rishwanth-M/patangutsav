@@ -259,25 +259,25 @@ function getRandomQuestions(allQuestions, numQuestions) {
     return shuffled.slice(0, numQuestions); // Select the first 'numQuestions' questions
 }
 
-// Render questions dynamically
 function renderQuestions(questions) {
     const questionsContainer = document.getElementById("quiz-form");
 
-    questions.forEach((question, index) => {
+    questions.forEach((question) => {
         const questionElement = document.createElement("div");
         questionElement.classList.add("question-container");
 
         questionElement.innerHTML = `
-            <p><strong>Q${index + 1}:</strong> ${question.question}</p>
-            <label><input type="radio" name="question${index}" value="A"> A: ${question.options.A}</label>
-            <label><input type="radio" name="question${index}" value="B"> B: ${question.options.B}</label>
-            <label><input type="radio" name="question${index}" value="C"> C: ${question.options.C}</label>
-            <label><input type="radio" name="question${index}" value="D"> D: ${question.options.D}</label>
+            <p><strong>${question.id}:</strong> ${question.question}</p>
+            <label><input type="radio" name="${question.id}" value="A"> A: ${question.options.A}</label>
+            <label><input type="radio" name="${question.id}" value="B"> B: ${question.options.B}</label>
+            <label><input type="radio" name="${question.id}" value="C"> C: ${question.options.C}</label>
+            <label><input type="radio" name="${question.id}" value="D"> D: ${question.options.D}</label>
         `;
 
         questionsContainer.appendChild(questionElement);
     });
 }
+
 
 
         // Handle form submission when the user clicks "Submit"
@@ -305,50 +305,59 @@ function renderQuestions(questions) {
         async function storeQuizResults(timeTaken) {
     const formData = new FormData(document.getElementById("quiz-form"));
     const responses = {};
-    let score = 0; // Variable to track the score
+    let score = 0;
 
-    // Fetch the correct answers from Firestore (or hardcode them)
+    // Fetch the correct answers from Firestore
     const questionsRef = collection(db, "quiz_questions");
-    const querySnapshot = await getDocs(query(questionsRef, limit(10))); // Adjust query for randomization if needed
+    const querySnapshot = await getDocs(questionsRef);
     const correctAnswers = {};
 
     querySnapshot.forEach((doc) => {
         const data = doc.data();
-        correctAnswers[doc.id] = data.correctAnswer; // Assuming correctAnswer is stored in the question document
+        correctAnswers[doc.id] = data.correctAnswer; // Store correct answers
     });
+
+    console.log("Correct Answers:", correctAnswers); // Debugging: Verify fetched answers
 
     // Compare user answers with correct answers
     formData.forEach((value, key) => {
-        const questionId = key.replace('question', ''); // Extract question ID from the name attribute
+        const questionId = key; // Use the key directly as question ID
         responses[questionId] = value;
 
-        // Check if the user's answer is correct
-        if (value === correctAnswers[questionId]) {
-            score++; // Increment score if the answer is correct
+        // Ensure correctAnswers[questionId] exists
+        if (correctAnswers[questionId]) {
+            // Compare user answer with the correct answer (case-insensitive)
+            if (value.trim().toUpperCase() === correctAnswers[questionId].trim().toUpperCase()) {
+                score++; // Increment score if correct
+            }
+        } else {
+            console.warn(`No correct answer found for Question ID: ${questionId}`);
         }
     });
+
+    console.log("Final Score:", score); // Debugging: Verify the calculated score
 
     // Store the responses and score in Firestore
     try {
         const submissionTime = new Date().toISOString();
         const userQuizRef = doc(db, "user_responses", userName);
-        
-        // Mark the user as submitted and store their score
+
         await setDoc(userQuizRef, {
             responses: responses,
             userName: userName,
             submissionTime: submissionTime,
             timeTaken: timeTaken,
-            score: score, // Store the score (out of 10)
-            submitted: true // Mark the user as having submitted the quiz
+            score: score, // Store the correct score
+            submitted: true
         });
 
         // Redirect to result page after successful submission
         window.location.href = "result.html?user=" + encodeURIComponent(userName);
     } catch (error) {
-        console.error("Error storing responses: ", error);
+        console.error("Error storing responses:", error);
     }
 }
+
 
 
         // Automatically submit quiz if the page is refreshed or closed
