@@ -66,8 +66,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";  
-
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+    
         const firebaseConfig = {
             apiKey: "AIzaSyAtNXG46tyO2FDZ0yO5p8CiNpp2uB3IbvE",
             authDomain: "quiz-47dd2.firebaseapp.com",
@@ -77,58 +77,68 @@
             appId: "1:172238588465:web:2aeddba718aef68b952310",
             measurementId: "G-TXMB92DQNC"
         };
-
+    
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
+    
         // Function to fetch and display the results
         async function fetchResults() {
             try {
-                const resultsRef = collection(db, "user_responses");
-                const querySnapshot = await getDocs(query(resultsRef, where("submitted", "==", true)));
+                const studentsRef = collection(db, "students"); // Fetch students collection
+                const studentsSnapshot = await getDocs(studentsRef);
+    
                 const resultsTable = document.getElementById("results-table");
                 const loadingText = document.getElementById("loading");
                 const tbody = resultsTable.querySelector("tbody");
-
+    
                 // Hide loading text and show the table once results are fetched
                 loadingText.style.display = "none";
                 resultsTable.style.display = "table";
-
-                // Loop through each document and fetch data
-                querySnapshot.forEach(async (doc) => {
-                    const data = doc.data();
-                    const userName = data.userName;
-                    const score = data.score;
-                    const timeTaken = data.timeTaken;
-
-                    // Fetch the phone number and name from the "students" collection
-                    const studentRef = collection(db, "students");
-                    const studentSnapshot = await getDocs(query(studentRef, where("name", "==", userName)));
-
-                    studentSnapshot.forEach((studentDoc) => {
-                        const studentData = studentDoc.data();
-                        const phoneNumber = studentData.phone;
-                        const studentName = studentData.name;
-
-                        // Create a new row and append it to the table
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${studentName}</td>
-                            <td>${phoneNumber}</td>
-                            <td>${score}</td>
-                            <td>${timeTaken} seconds</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                });
+    
+                // Loop through the students to fetch name, phone, and add results
+                for (const studentDoc of studentsSnapshot.docs) {
+                    const studentData = studentDoc.data();
+                    const studentName = studentData.name;
+                    const phoneNumber = studentData.phone;
+    
+                    // Fetch the quiz result from quiz_results collection for each student
+                    const quizResultRef = doc(db, "quiz_results", studentName);
+                    const quizResultSnapshot = await getDoc(quizResultRef);
+    
+                    let score = "Not Submitted"; // Default value if no result found
+                    if (quizResultSnapshot.exists()) {
+                        const quizData = quizResultSnapshot.data();
+                        score = quizData.score || "Not Available"; // Fetch score
+                    }
+    
+                    // Fetch the timeTaken from user_responses collection
+                    const userQuizRef = doc(db, "user_responses", studentName);
+                    const userQuizSnapshot = await getDoc(userQuizRef);
+    
+                    let timeTaken = "Not Submitted"; // Default value if no response found
+                    if (userQuizSnapshot.exists()) {
+                        const userData = userQuizSnapshot.data();
+                        timeTaken = userData.timeTaken || "Not Available"; // Fetch timeTaken
+                    }
+    
+                    // Create a new row and append it to the table
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${studentName}</td>
+                        <td>${phoneNumber}</td>
+                        <td>${score}</td>
+                        <td>${timeTaken}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
             } catch (error) {
                 console.error("Error fetching results: ", error);
             }
         }
-
+    
         // Call the fetchResults function when the page loads
         fetchResults();
     </script>
+    
 </body>
 </html>
-
